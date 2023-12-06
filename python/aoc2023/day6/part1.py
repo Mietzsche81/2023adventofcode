@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 
@@ -14,20 +16,17 @@ def parse(input_file):
     return times, distances
 
 
-def calc_distance(hold_time, total_time):
-    return (total_time - hold_time) * hold_time
-
-
 def degrees_of_freedom(time, distance):
-    dof = 0
-    for t in range(1, time):
-        if calc_distance(t, time) > distance:
-            dof += 1
-    return dof
+    # Quadratic formula for -1 * t**2 + time * t - distance > 0
+    center = time / 2
+    discriminant = np.sqrt(time * time - 4 * distance) / 2
+    x, y = math.ceil(center - discriminant), math.floor(center + discriminant)
+    # Return length of range between roots
+    return y - x + 1
 
 
 def main(times, distances):
-    dof = []
+    dof = 1
     for t, d in zip(times, distances):
-        dof.append(degrees_of_freedom(t, d))
-    return np.product(dof)
+        dof *= degrees_of_freedom(t, d)
+    return dof

@@ -16,22 +16,10 @@ def parse(input_file):
     return time, distance
 
 
-def calc_distance(hold_time, total_time):
-    return (total_time - hold_time) * hold_time
-
-
-def degrees_of_freedom(time, distance):
-    dof = 0
-    for t in range(1, time):
-        if calc_distance(t, time) > distance:
-            dof += 1
-    return dof
-
-
 def main(time, distance):
-    # lower, upper, tol = 1, time - 1, 0.5
-    # f = lambda t: t * (time - t) - distance
-    a = time / 2
-    b = np.sqrt(time * time - 4 * distance) / 2
-    x, y = math.ceil(a - b), math.floor(a + b)
+    # Quadratic formula for -1 * t**2 + time * t - distance > 0
+    center = time / 2
+    discriminant = np.sqrt(time * time - 4 * distance) / 2
+    x, y = math.ceil(center - discriminant), math.floor(center + discriminant)
+    # Return length of range between roots
     return y - x + 1
