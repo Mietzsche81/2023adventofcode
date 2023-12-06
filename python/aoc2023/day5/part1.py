@@ -1,10 +1,18 @@
 from typing import Dict, List, Tuple
 
+import numpy as np
+
 
 def main(
     seeds: List[int],
     maps: Dict[Tuple[str, str], Dict[str, List[int]]],
 ):
+    # Reorder maps by ascending source_range_start
+    for key, data in maps.items():
+        order = np.argsort(data["source_range_start"])
+        for subkey, value in data.items():
+            maps[key][subkey] = [value[i] for i in order]
+
     output_type = "location"
     almanac = []
     outputs = []
