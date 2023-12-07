@@ -1,36 +1,40 @@
-from argparse import ArgumentParser
 from collections import Counter
 
-arg_parser = ArgumentParser()
-arg_parser.add_argument("input", type=str)
 
-args = arg_parser.parse_args()
-input_file = args.input
+def main(hands):
+    # Enumerate value of cards in order
+    tokens = ["J"] + list(str(token) for token in range(2, 10)) + ["T", "Q", "K", "A"]
+    card_value = {x: i for i, x in enumerate(tokens)}
 
-with open(input_file, "r") as fin:
-    lines = fin.readlines()
+    for hand in hands:
+        # Count matches
+        hand["rank"] = Counter(hand["cards"])
+        # If all jokers, leave as is (lowest value 5-kind)
+        if hand["cards"] == "J" * len(hand["cards"]):
+            pass
+        # If joker in hand...
+        elif "J" in hand["cards"]:
+            # Count number of jokers, remove from hand
+            jokers = hand["rank"].pop("J")
+            # Find most common card (besides joker)
+            most_common_card = hand["rank"].most_common(1)[0][0]
+            # Cast jokers as most common card
+            hand["rank"][most_common_card] += jokers
+        # Arrive at tallies of matches in hand
+        hand["rank"] = sorted(hand["rank"].values(), reverse=True)
 
-card_value = ["J"] + list(str(x) for x in range(2, 10)) + ["T", "Q", "K", "A"]
-card_value = {x: i + 1 for i, x in enumerate(card_value)}
+    # Sort first by matches, tiebreak by value of cards in order
+    hands = sorted(
+        hands,
+        key=lambda d: (
+            d["rank"],
+            [card_value[x] for x in d["cards"]],
+        ),
+    )
 
-hands = [{"cards": [card_value[x] for x in l.split()[0]]} for l in lines]
-bids = [int(l.split()[1]) for l in lines]
+    # Sum winnings
+    winnings = 0
+    for i, hand in enumerate(hands):
+        winnings += (i + 1) * hand["bid"]
 
-for i, hand in enumerate(hands):
-    freq = Counter(hand["cards"])
-    if hand["cards"] == [1] * 5:
-        pass
-    elif 1 in hand["cards"]:
-        hands[i]["jokers"] = freq.pop(1)
-        key, val = freq.most_common(1)[0]
-        freq[key] += hands[i]["jokers"]
-    hands[i]["rank"] = sorted(freq.values(), reverse=True)
-    hands[i]["bid"] = bids[i]
-
-hands = sorted(hands, key=lambda d: (d["rank"], d["cards"]))
-
-winnings = 0
-for i, hand in enumerate(hands):
-    winnings += (i + 1) * hand["bid"]
-
-print(winnings)
+    return winnings
