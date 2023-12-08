@@ -1,12 +1,5 @@
 import itertools as it
-from math import gcd
-
-
-def lcm(nums):
-    multiple = 1
-    for i in nums:
-        multiple = multiple * i // gcd(multiple, i)
-    return multiple
+import math
 
 
 def main(steps, paths):
@@ -21,4 +14,4 @@ def main(steps, paths):
             else:
                 current = paths[current][step]
 
-    return lcm(ends)
+    return math.lcm(*ends)

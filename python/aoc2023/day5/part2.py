@@ -12,36 +12,28 @@ def main(
     seeds: List[int],
     maps: Dict[Tuple[str, str], Dict[str, List[int]]],
 ):
+    # Set objectives, create data lineage
     input_type = "seed"
     output_type = "location"
-
-    """
-    # Reorder maps by lowest destination
-    for key, data in maps.items():
-        order = np.argsort(data["dest_range_start"])
-        for subkey, value in data.items():
-            maps[key][subkey] = [value[i] for i in order]
-    """
-
-    # Create data lineage
     map_keys = [input_type]
     while map_keys[-1] != output_type:
         map_keys.append(next((y for (x, y) in maps if x == map_keys[-1])))
 
-    # Create seed ranges
+    # Create seed ranges from seeds input
     seed_ranges = [(i, i + n) for i, n in zip(seeds[::2], seeds[1::2])]
 
     # Find min location for each seed range
     min_locations = []
     for seed_range in seed_ranges:
-        forks = [seed_range]
-        # For each layer of the map
+        source_forks = [seed_range]
+        # For each layer of the data lineage's source -> destination mapping
         for map_key in pairwise(map_keys):
+            print(map_key, "---", source_forks)
             map = maps[map_key]
-            # For each possible range of sources
+            # For each 'fork' of ranges in the source space
             dest_forks = []
-            for input_start, input_end in forks:
-                # For each mapped possible range of destinations
+            for input_start, input_end in source_forks:
+                # For each possible mapping range of destinations applied to said source fork
                 for j in range(len(map["source_range_start"])):
                     source_start = map["source_range_start"][j]
                     range_length = map["range_length"][j]
@@ -50,15 +42,13 @@ def main(
                     map_delta = dest_start - source_start
                     # No new mapping if not overlapping
                     if input_end < source_start:
-                        # dest_forks += [(input_start, input_end)]
                         continue
                     elif input_start >= source_end:
-                        # dest_forks += [(input_start, input_end)]
                         continue
-                    # At least some overlap...
+                    # But if there's at least some overlap...
                     else:
                         match (input_start < source_start, input_end > source_end):
-                            # Input complete contained by transformation
+                            # Input completely contained by transformation
                             case (False, False):
                                 dest_forks += [
                                     (
@@ -87,8 +77,8 @@ def main(
                                 ]
             dest_forks.sort()
             if dest_forks:
-                forks = dest_forks
-            # input()
-        min_locations.append(min(forks)[0])
+                source_forks = dest_forks
+            input()
+        min_locations.append(min(source_forks)[0])
 
     return min(min_locations)
