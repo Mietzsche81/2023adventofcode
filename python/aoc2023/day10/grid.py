@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as nptype
 
 
 class Grid:
@@ -21,6 +22,8 @@ class Grid:
         return [cls.dir[x] for x in s.strip()]
 
     def __init__(self, input_file: str):
+        """Parse input_file and instantiate `Grid` variables"""
+        # Map coordinate delta's from shape
         self._delta_from_current = {
             "|": self.dirs("NS"),
             "-": self.dirs("EW"),
@@ -30,6 +33,7 @@ class Grid:
             "F": self.dirs("ES"),
             "S": self.dirs("ENSW"),
         }
+        # Map shape from attached neighboring pipes
         self._shape_from_path = {
             "NS": "|",
             "EW": "-",
@@ -39,22 +43,28 @@ class Grid:
             "ES": "F",
             "ENSW": "S",
         }
-        self._valid_forward = {
+        # Map neighboring pipes shapes that are valid for attaching
+        self._valid_attach = {
             self.dir["N"]: "S|7F",
             self.dir["S"]: "S|JL",
             self.dir["W"]: "S-FL",
             self.dir["E"]: "S-J7",
         }
+
+        # Parse input
         with open(input_file, "r") as fin:
             lines = fin.readlines()
 
-        self.grid: np.ndarray[2] = np.array(self.encode(lines))
+        # Convert raw ascii grid
+        self.grid: nptype.NDArray[np.int32] = np.array(self.encode(lines))
+        # Initialize empty loop
         self.loop = None
 
     def shape(self):
         return self.grid.shape
 
     def encode(self, unencoded):
+        """Convert ASCII shape to numeric encoding"""
         if isinstance(unencoded, str) and len(unencoded.strip()) == 1:
             return self.encoder[unencoded]
         if isinstance(unencoded, str):
@@ -63,20 +73,22 @@ class Grid:
             return [self.encode(row) for row in unencoded]
 
     def decode(self, encoded):
+        """Convert numeric encoding to ASCII shape"""
         if isinstance(encoded[0], (int, np.int32, np.int64)):
             return "".join(self.decoder[x] for x in encoded)
         else:
             return [self.decode(row) for row in encoded]
 
-    def find_valid_forward(self, cell):
+    def find_valid_attach(self, cell):
+        """Find neighboring cells with valid attachments"""
         return [
             abs
             for rel in self._delta_from_current[self.decoder[self.grid[*cell]]]
-            if self.decoder[self.grid[*(abs := cell + rel)]] in self._valid_forward[rel]
+            if self.decoder[self.grid[*(abs := cell + rel)]] in self._valid_attach[rel]
         ]
 
     def advance(self, previous, current):
-        """Return the coordinates of the next cell
+        """Return the coordinates of the next cell attached to the `current`
 
         Calculates next cell from current using previous to imply direction
         """
@@ -114,17 +126,21 @@ class Grid:
                     return current + [0, 1]
 
     def find_loop(self):
+        """From the start location denoted by `S`, find the loop of attachments"""
+        # start location
         self.start = np.argwhere(self.grid == self.encoder["S"])[0]
-        self.loop = None
         possible_path = [
-            [self.start, forward] for forward in self.find_valid_forward(self.start)
+            [self.start, forward] for forward in self.find_valid_attach(self.start)
         ]
+
+        # Iteratively solve for loop
+        self.loop = None
         while not self.loop:
             # For each possible path from start
             for i, path in enumerate(possible_path):
                 # Attempt to advance
                 forward = self.advance(*path[-2:])
-                if (forward == self.find_valid_forward(path[-1])).all(axis=1).any():
+                if (forward == self.find_valid_attach(path[-1])).all(axis=1).any():
                     path.append(forward)
                 else:
                     del possible_path[i]
@@ -135,7 +151,7 @@ class Grid:
                     self.loop = path[:-1]
                     break
 
-        # Replace start type
+        # Replace start type with equivalent shape
         section = [self.loop[1] - self.start, self.loop[-1] - self.start]
         dir_symbols = {d: i for i, d in self.dir.items()}
         shape = self._shape_from_path[
