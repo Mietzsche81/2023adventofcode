@@ -7,9 +7,9 @@ def parse(input_file):
 
     grid = np.array(
         [
-            [1 if char == "#" else 0 for char in line.strip()]
+            [1 if char == "#" else 0 for char in stripped]
             for line in lines
-            if line.strip()
+            if (stripped := line.strip())
         ]
     )
     galaxies = np.argwhere(grid)
