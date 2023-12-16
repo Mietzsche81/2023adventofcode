@@ -1,7 +1,10 @@
 def find_smudge(grid: list[str]):
     for i in range(1, len(grid)):
         gen = zip(grid[:i][::-1], grid[i:])
-        if sum(b_i != a_i for b, a in gen for b_i, a_i in zip(b, a)) == 1:
+        if (
+            sum(b_i != a_i for before, after in gen for b_i, a_i in zip(before, after))
+            == 1
+        ):
             return i
 
 

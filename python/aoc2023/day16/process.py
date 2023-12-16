@@ -22,7 +22,7 @@ def main(grid: list[str], starts):
                 cache.add((xf, v0))
 
             # Iterate forward
-            vf = [v0]
+            vf = [v0]  # default case
             match grid[xf[0]][xf[1]]:
                 case "|":
                     if v0[1]:
