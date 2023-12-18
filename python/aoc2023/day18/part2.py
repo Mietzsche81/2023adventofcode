@@ -5,7 +5,7 @@ import numpy as np
 
 from parse import parse
 
-direction, distance = parse(sys.argv[1], hex=False)
+direction, distance = parse(sys.argv[1], hex=True)
 
 encode = {
     "U": (-1, 0),
