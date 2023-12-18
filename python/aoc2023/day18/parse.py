@@ -19,3 +19,22 @@ def parse(input_file: str, *, hex: bool) -> tuple[list[tuple[int, int]], list[in
         distance = [int(line.split()[1]) for line in lines]
 
     return direction, distance
+
+
+def instructions_to_sequence(direction, distance):
+    encode = {
+        "U": (-1, 0),
+        "D": (1, 0),
+        "R": (0, 1),
+        "L": (0, -1),
+    }
+
+    # Apply instructions sequentially
+    location = (0, 0)
+    sequence = [location]
+    for u, d in zip(direction, distance):
+        u = encode[u]
+        location = (location[0] + d * u[0], location[1] + d * u[1])
+        sequence.append(location)
+
+    return sequence
